@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+use Carbon\Carbon;
+use GuzzleHttp;
+
+use App\Meeting;
+
+class MeetingController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    /**
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function index()
+    {
+        return view('meeting');
+    }
+
+    public function scheduled_sync()
+    {
+        $this->sync();
+    }
+
+    public function manual_sync()
+    {
+        $this->sync();
+        return redirect()->route('home')->with('status', 'Manual sync executed successfully!');
+    }
+
+    private function sync()
+    {
+        $client = new GuzzleHttp\Client([
+            'base_uri' => env('ZOOM_BASE_URI'),
+            'timeout' => 5.0,
+        ]);
+
+        // To handle deletion, first mark all meeting as disabled.
+        // Later during synchronixation, mark them back as enabled.
+        // Accordingly, the deleted meeting will be marked as disabled.
+        $now = Carbon::now();
+        Meeting::where('start_at', '>=', $now)->update(['status' => 'DISABLED']);
+
+        $next_page_token = null;
+        while(($next_page_token === null) || ($next_page_token !== '')) {
+            // Prepare and perform request.
+            $request_headers = ['Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN')];
+            $request_query = ['type' => 'upcoming', 'page_size' => 10];
+            if ($next_page_token !== null) {
+                $request_query['next_page_token'] = $next_page_token;
+            }
+            $response = $client->request(
+                'GET',
+                'users/'.env('ZOOM_USER_ID').'/meetings',
+                [
+                    'headers' => $request_headers,
+                    'query' => $request_query,
+                ]
+            );
+
+            // Validate response and process accordingly.
+            if ($response->getStatusCode() !== 200) {
+                break;
+            }
+            $body = $response->getBody();
+            $contents = $body->getContents();
+            $contents_json = json_decode($contents);
+            foreach ($contents_json->meetings as $meeting) {
+                if (in_array($meeting->type, array(2, 8))) {
+                    $meeting_start_time = Carbon::createFromFormat(
+                        'Y-m-d\TH:i:s\Z', $meeting->start_time);
+                    Meeting::updateOrCreate(
+                        ['meeting_id' => $meeting->id,
+                         'start_at' => $meeting_start_time],
+                        ['topic' => $meeting->topic,
+                         'duration' => $meeting->duration,
+                         'zoom_url' => $meeting->join_url,
+                         'status' => 'ENABLED']
+                    );
+                }
+            }
+
+            // Update next page token for pagination.
+            $next_page_token = $contents_json->next_page_token;
+        }
+    }
+}
