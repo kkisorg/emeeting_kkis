@@ -28,7 +28,15 @@ class MeetingController extends Controller
      */
     public function index()
     {
-        return view('meeting');
+        $now = Carbon::now();
+        $meetings = Meeting::where('status', 'ENABLED')
+                           ->where('start_at', '>=', $now)
+                           ->orderBy('start_at')
+                           ->get();
+        foreach ($meetings as $meeting) {
+            $meeting->local_start_at = $meeting->start_at->copy()->tz('Asia/Singapore');
+        }
+        return view('meeting', ['meetings' => $meetings]);
     }
 
     public function scheduled_sync()
