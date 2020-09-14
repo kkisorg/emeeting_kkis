@@ -11,6 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Auth::routes(['register' => false]);
+
+Route::get('/', 'MeetingController@index')->name('home');
+Route::get('/manual_sync', 'MeetingController@manual_sync')->name('manual_sync');
