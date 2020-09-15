@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
 use GuzzleHttp;
@@ -104,6 +105,44 @@ class MeetingController extends Controller
 
             // Update next page token for pagination.
             $next_page_token = $contents_json->next_page_token;
+        }
+    }
+
+    public function start_livestream()
+    {
+        $now = Carbon::now();
+        $next_one_minute = $now->copy()->addMinute();
+
+        $meeting = Meeting::where('status', 'ENABLED')
+                          ->whereNotNull('livestream_configuration_id')
+                          ->whereBetween('livestream_start_at', [$now, $next_one_minute])
+                          ->first();
+
+        if ($meeting) {
+            $client = new GuzzleHttp\Client([
+                'base_uri' => env('ZOOM_BASE_URI'),
+                'timeout' => 5.0,
+            ]);
+            $request_headers = [
+                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Content-Type' => 'application/json'
+            ];
+            $body = [
+                'action' => 'start',
+                'settings' => [
+                    'active_speaker_name' => false,
+                    'display_name' => $meeting->livestream_configurations->name
+                ]
+            ];
+            Log::info(json_encode($body));
+            $response = $client->request(
+               'PATCH',
+               'meetings/'.$meeting->meeting_id.'/livestream/status',
+               [
+                   'headers' => $request_headers,
+                   'body' => json_encode($body),
+               ]
+            );
         }
     }
 }
