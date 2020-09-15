@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
 use GuzzleHttp;
@@ -28,6 +29,7 @@ class MeetingController extends Controller
      */
     public function index()
     {
+        Log::info('Started listing meetings.');
         $now = Carbon::now();
         $meetings = Meeting::where('status', 'ENABLED')
                            ->where('start_at', '>=', $now)
@@ -36,17 +38,23 @@ class MeetingController extends Controller
         foreach ($meetings as $meeting) {
             $meeting->local_start_at = $meeting->start_at->copy()->tz('Asia/Singapore');
         }
+        Log::info('Getting '.count($meetings).' meetings.');
+        Log::info('Finished indexing meetings.');
         return view('meeting', ['meetings' => $meetings]);
     }
 
     public function scheduled_sync()
     {
+        Log::info('Started scheduled meeting synchronization');
         $this->sync();
+        Log::info('Finished scheduled meeting synchronization');
     }
 
     public function manual_sync()
     {
+        Log::info('Started manual meeting synchronization');
         $this->sync();
+        Log::info('Finished manual meeting synchronization');
         return redirect()->route('home')->with('status', 'Manual sync executed successfully!');
     }
 
@@ -62,6 +70,7 @@ class MeetingController extends Controller
         // Accordingly, the deleted meeting will be marked as disabled.
         $now = Carbon::now();
         Meeting::where('start_at', '>=', $now)->update(['status' => 'DISABLED']);
+        Log::info('Scheduled meetings disabled.');
 
         $next_page_token = null;
         while(($next_page_token === null) || ($next_page_token !== '')) {
@@ -79,6 +88,7 @@ class MeetingController extends Controller
                     'query' => $request_query,
                 ]
             );
+            Log::info('List meetings requested');
 
             // Validate response and process accordingly.
             if ($response->getStatusCode() !== 200) {
@@ -86,7 +96,9 @@ class MeetingController extends Controller
             }
             $body = $response->getBody();
             $contents = $body->getContents();
+            Log::debug($contents);
             $contents_json = json_decode($contents);
+            Log::debug(json_encode($contents_json));
             foreach ($contents_json->meetings as $meeting) {
                 if (in_array($meeting->type, array(2, 8))) {
                     $meeting_start_time = Carbon::createFromFormat(
