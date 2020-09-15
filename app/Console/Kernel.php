@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
         $schedule->call('App\Http\Controllers\MeetingController@scheduled_sync')->twiceDaily(10, 22);
+        $schedule->call('App\Http\Controllers\MeetingController@start_livestream')->everyMinute();
     }
 
     /**
