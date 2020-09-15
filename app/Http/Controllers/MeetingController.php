@@ -96,16 +96,13 @@ class MeetingController extends Controller
             }
             $body = $response->getBody();
             $contents = $body->getContents();
-            Log::debug($contents);
             $contents_json = json_decode($contents);
-            Log::debug(json_encode($contents_json));
             foreach ($contents_json->meetings as $meeting) {
                 if (in_array($meeting->type, array(2, 8))) {
                     $meeting_start_time = Carbon::createFromFormat(
                         'Y-m-d\TH:i:s\Z', $meeting->start_time);
-                    Log::debug($meeting->id);
                     Meeting::updateOrCreate(
-                        ['meeting_id' => $meeting->id,
+                        ['meeting_id' => (string) $meeting->id,
                          'start_at' => $meeting_start_time],
                         ['topic' => $meeting->topic,
                          'duration' => $meeting->duration,
