@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
 use GuzzleHttp;
@@ -134,7 +133,6 @@ class MeetingController extends Controller
                     'display_name' => $meeting->livestream_configurations->name
                 ]
             ];
-            Log::info(json_encode($body));
             $response = $client->request(
                'PATCH',
                'meetings/'.$meeting->meeting_id.'/livestream/status',
