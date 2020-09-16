@@ -115,6 +115,12 @@ class MeetingController extends Controller
                     $error_message .= "Response:\n".Psr7\str($e->getResponse());
                 }
                 Log::error("ConnectException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ConnectException occurred when listing meetings.'));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ConnectException occurred when listing meetings.');
+                }
                 break;
             } catch (ClientException $e) {
                 $error_message = "Request:\n".Psr7\str($e->getRequest());
@@ -122,6 +128,12 @@ class MeetingController extends Controller
                     $error_message .= "Response:\n".Psr7\str($e->getResponse());
                 }
                 Log::error("ClientException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ClientException occurred when listing meetings.'));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ClientException occurred when listing meetings.');
+                }
                 break;
             } catch (ServerException $e) {
                 $error_message = "Request:\n".Psr7\str($e->getRequest());
@@ -129,6 +141,12 @@ class MeetingController extends Controller
                     $error_message .= "Response:\n".Psr7\str($e->getResponse());
                 }
                 Log::error("ServerException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ServerException occurred when listing meetings.'));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ServerException occurred when listing meetings.');
+                }
                 break;
             }
 
@@ -206,6 +224,12 @@ class MeetingController extends Controller
                     $error_message .= "Response:\n".Psr7\str($e->getResponse());
                 }
                 Log::error("ConnectException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ConnectException occurred when starting livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ConnectException occurred when starting livestream.');
+                }
                 return;
             } catch (ClientException $e) {
                 $error_message = "Request:\n".Psr7\str($e->getRequest());
@@ -213,6 +237,12 @@ class MeetingController extends Controller
                     $error_message .= "Response:\n".Psr7\str($e->getResponse());
                 }
                 Log::error("ClientException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ClientException occurred when starting livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ClientException occurred when starting livestream.');
+                }
                 return;
             } catch (ServerException $e) {
                 $error_message = "Request:\n".Psr7\str($e->getRequest());
@@ -220,6 +250,12 @@ class MeetingController extends Controller
                     $error_message .= "Response:\n".Psr7\str($e->getResponse());
                 }
                 Log::error("ServerException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ServerException occurred when starting livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ServerException occurred when starting livestream.');
+                }
                 return;
             }
             Log::info('Livestream for meeting ID '.$meeting->meeting_id.
