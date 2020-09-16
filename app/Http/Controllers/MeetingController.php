@@ -49,16 +49,16 @@ class MeetingController extends Controller
 
     public function scheduled_sync()
     {
-        Log::info('Started scheduled meeting synchronization');
+        Log::info('Started scheduled meeting synchronization.');
         $this->sync();
-        Log::info('Finished scheduled meeting synchronization');
+        Log::info('Finished scheduled meeting synchronization.');
     }
 
     public function manual_sync()
     {
-        Log::info('Started manual meeting synchronization');
+        Log::info('Started manual meeting synchronization.');
         $this->sync();
-        Log::info('Finished manual meeting synchronization');
+        Log::info('Finished manual meeting synchronization.');
         return redirect()->route('home')->with('status', 'Manual sync executed successfully!');
     }
 
@@ -117,7 +117,7 @@ class MeetingController extends Controller
             }
 
             // Process the response accordingly.
-            Log::info('List meetings requested');
+            Log::info('List meetings requested.');
             $body = $response->getBody();
             $contents = $body->getContents();
             $contents_json = json_decode($contents);
@@ -199,7 +199,8 @@ class MeetingController extends Controller
                 Log::error("ServerException:\n".$error_message);
                 return;
             }
-            Log::info('Livestream for meeting ID '.$meeting->id.' started successfully.');
+            Log::info('Livestream for meeting ID '.$meeting->id.
+                ' started using '.$meeting->livestream_configurations->name.'.');
         }
     }
 }
