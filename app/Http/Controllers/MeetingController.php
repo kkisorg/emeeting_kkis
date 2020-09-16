@@ -273,4 +273,82 @@ class MeetingController extends Controller
             }
         }
     }
+
+    public function test()
+    {
+        Log::info('Started test on Telegram notification.');
+        try {
+            Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
+                new GeneralNotification('Test message!'));
+            Log::info('Finished test on Telegram notification.');
+        } catch (\Exception $e) {
+            Log::error('Failed sending notification via Telegram: Test message!');
+            Log::error('Failed test on Telegram notification.');
+        }
+
+        Log::info('Started test on Zoom REST API.');
+        // Prepare and perform request.
+        $client = new Client([
+            'base_uri' => env('ZOOM_BASE_URI'),
+            'timeout' => 5.0,
+        ]);
+        $request_headers = ['Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN')];
+        $request_query = ['email' => env('ZOOM_USER_ID')];
+        try {
+            $response = $client->request(
+                'GET',
+                'users/email',
+                [
+                    'headers' => $request_headers,
+                    'query' => $request_query,
+                ]
+            );
+            try {
+                Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
+                    new GeneralNotification('Zoom REST API test succeed!'));
+            } catch (\Exception $e) {
+                Log::error('Failed sending notification via Telegram: Zoom REST API test succeed!');
+            }
+            Log::info('Finished test on Zoom REST API.');
+        } catch (ConnectException $e) {
+            $error_message = "Request:\n".Psr7\str($e->getRequest());
+            if ($e->hasResponse()) {
+                $error_message .= "Response:\n".Psr7\str($e->getResponse());
+            }
+            Log::error("ConnectException:\n".$error_message);
+            Log::error('Failed test on Zoom REST API: ConnectException.');
+            try {
+                Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
+                    new GeneralNotification('Failed test on Zoom REST API: ConnectException.'));
+            } catch (\Exception $e) {
+                Log::error('Failed sending notification via Telegram: Failed test on Zoom REST API: ConnectException.');
+            }
+        } catch (ClientException $e) {
+            $error_message = "Request:\n".Psr7\str($e->getRequest());
+            if ($e->hasResponse()) {
+                $error_message .= "Response:\n".Psr7\str($e->getResponse());
+            }
+            Log::error("ClientException:\n".$error_message);
+            Log::error('Failed test on Zoom REST API: ClientException.');
+            try {
+                Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
+                    new GeneralNotification('Failed test on Zoom REST API: ClientException.'));
+            } catch (\Exception $e) {
+                Log::error('Failed sending notification via Telegram: Failed test on Zoom REST API: ClientException.');
+            }
+        } catch (ServerException $e) {
+            $error_message = "Request:\n".Psr7\str($e->getRequest());
+            if ($e->hasResponse()) {
+                $error_message .= "Response:\n".Psr7\str($e->getResponse());
+            }
+            Log::error("ServerException:\n".$error_message);
+            Log::error('Failed test on Zoom REST API: ServerException.');
+            try {
+                Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
+                    new GeneralNotification('Failed test on Zoom REST API: ServerException.'));
+            } catch (\Exception $e) {
+                Log::error('Failed sending notification via Telegram: Failed test on Zoom REST API: ServerException.');
+            }
+        }
+    }
 }
