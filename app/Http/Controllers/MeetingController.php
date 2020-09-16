@@ -6,7 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
-use GuzzleHttp;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 
 use App\Meeting;
 
@@ -45,22 +49,22 @@ class MeetingController extends Controller
 
     public function scheduled_sync()
     {
-        Log::info('Started scheduled meeting synchronization');
+        Log::info('Started scheduled meeting synchronization.');
         $this->sync();
-        Log::info('Finished scheduled meeting synchronization');
+        Log::info('Finished scheduled meeting synchronization.');
     }
 
     public function manual_sync()
     {
-        Log::info('Started manual meeting synchronization');
+        Log::info('Started manual meeting synchronization.');
         $this->sync();
-        Log::info('Finished manual meeting synchronization');
+        Log::info('Finished manual meeting synchronization.');
         return redirect()->route('home')->with('status', 'Manual sync executed successfully!');
     }
 
     private function sync()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => env('ZOOM_BASE_URI'),
             'timeout' => 5.0,
         ]);
@@ -80,20 +84,40 @@ class MeetingController extends Controller
             if ($next_page_token !== null) {
                 $request_query['next_page_token'] = $next_page_token;
             }
-            $response = $client->request(
-                'GET',
-                'users/'.env('ZOOM_USER_ID').'/meetings',
-                [
-                    'headers' => $request_headers,
-                    'query' => $request_query,
-                ]
-            );
-            Log::info('List meetings requested');
-
-            // Validate response and process accordingly.
-            if ($response->getStatusCode() !== 200) {
+            try {
+                $response = $client->request(
+                    'GET',
+                    'users/'.env('ZOOM_USER_ID').'/meetings',
+                    [
+                        'headers' => $request_headers,
+                        'query' => $request_query,
+                    ]
+                );
+            } catch (ConnectException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ConnectException:\n".$error_message);
+                break;
+            } catch (ClientException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ClientException:\n".$error_message);
+                break;
+            } catch (ServerException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ServerException:\n".$error_message);
                 break;
             }
+
+            // Process the response accordingly.
+            Log::info('List meetings requested.');
             $body = $response->getBody();
             $contents = $body->getContents();
             $contents_json = json_decode($contents);
@@ -128,7 +152,8 @@ class MeetingController extends Controller
                           ->first();
 
         if ($meeting) {
-            $client = new GuzzleHttp\Client([
+            Log::info('Starting livestream for meeting ID '.$meeting->id.'.');
+            $client = new Client([
                 'base_uri' => env('ZOOM_BASE_URI'),
                 'timeout' => 5.0,
             ]);
@@ -143,14 +168,39 @@ class MeetingController extends Controller
                     'display_name' => $meeting->livestream_configurations->name
                 ]
             ];
-            $response = $client->request(
-               'PATCH',
-               'meetings/'.$meeting->meeting_id.'/livestream/status',
-               [
-                   'headers' => $request_headers,
-                   'body' => json_encode($body),
-               ]
-            );
+            try {
+                $response = $client->request(
+                   'PATCH',
+                   'meetings/'.$meeting->meeting_id.'/livestream/status',
+                   [
+                       'headers' => $request_headers,
+                       'body' => json_encode($body),
+                   ]
+                );
+            } catch (ConnectException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ConnectException:\n".$error_message);
+                return;
+            } catch (ClientException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ClientException:\n".$error_message);
+                return;
+            } catch (ServerException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ServerException:\n".$error_message);
+                return;
+            }
+            Log::info('Livestream for meeting ID '.$meeting->id.
+                ' started using '.$meeting->livestream_configurations->name.'.');
         }
     }
 }
