@@ -152,6 +152,7 @@ class MeetingController extends Controller
                           ->first();
 
         if ($meeting) {
+            Log::info('Starting livestream for meeting ID '.$meeting->id.'.');
             $client = new Client([
                 'base_uri' => env('ZOOM_BASE_URI'),
                 'timeout' => 5.0,
@@ -167,14 +168,38 @@ class MeetingController extends Controller
                     'display_name' => $meeting->livestream_configurations->name
                 ]
             ];
-            $response = $client->request(
-               'PATCH',
-               'meetings/'.$meeting->meeting_id.'/livestream/status',
-               [
-                   'headers' => $request_headers,
-                   'body' => json_encode($body),
-               ]
-            );
+            try {
+                $response = $client->request(
+                   'PATCH',
+                   'meetings/'.$meeting->meeting_id.'/livestream/status',
+                   [
+                       'headers' => $request_headers,
+                       'body' => json_encode($body),
+                   ]
+                );
+            } catch (ConnectException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ConnectException:\n".$error_message);
+                return;
+            } catch (ClientException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ClientException:\n".$error_message);
+                return;
+            } catch (ServerException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ServerException:\n".$error_message);
+                return;
+            }
+            Log::info('Livestream for meeting ID '.$meeting->id.' started successfully.');
         }
     }
 }
