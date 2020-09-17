@@ -45,7 +45,9 @@ class GeneralNotification extends Notification implements ShouldQueue
      */
     public function toTelegram($notifiable)
     {
-        $message = TelegramMessage::create()->content($this->message);
+        $message = TelegramMessage::create()->token(env('TELEGRAM_BOT_TOKEN'));
+
+        $message = $message->content($this->message);
 
         if ($this->meeting !== null) {
             $message = $message->button('Join Meeting', $this->meeting->zoom_url);
