@@ -11,6 +11,7 @@ class EventNotificationController extends Controller
     {
         Log::debug($request->header('Authorization'));
         Log::debug($request->input('event'));
+        Log::debug($request->headers->all());
         return response(null, 204);
     }
 }
