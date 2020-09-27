@@ -351,11 +351,4 @@ class MeetingController extends Controller
             }
         }
     }
-
-    public function zoom_event(Request $request)
-    {
-        Log::debug($request->header('Authorization'));
-        Log::debug($request->input('event'));
-        return response()->json(['status' => 'OK'], 200);
-    }
 }
