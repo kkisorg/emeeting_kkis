@@ -52,6 +52,11 @@ class EventNotificationController extends Controller
                 $message = $participant_name.' left meeting '.$meeting_id.'.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
+            case 'meeting.created':
+            case 'meeting.updated':
+            case 'meeting.deleted':
+                app(MeetingController::class)->triggered_sync();
+                break;
             default:
                 break;
         }
