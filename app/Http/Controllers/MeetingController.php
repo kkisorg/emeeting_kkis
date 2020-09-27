@@ -178,11 +178,11 @@ class MeetingController extends Controller
     public function start_livestream()
     {
         $now = Carbon::now();
-        $next_one_minute = $now->copy()->addMinute();
+        $last_one_minute = $now->copy()->subMinute();
 
         $meeting = Meeting::where('status', 'ENABLED')
                           ->whereNotNull('livestream_configuration_id')
-                          ->whereBetween('livestream_start_at', [$now, $next_one_minute])
+                          ->whereBetween('livestream_start_at', [$last_one_minute, $now])
                           ->first();
 
         if ($meeting) {
