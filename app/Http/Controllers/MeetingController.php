@@ -49,24 +49,24 @@ class MeetingController extends Controller
         return view('meeting', ['meetings' => $meetings]);
     }
 
-    public function scheduled_sync()
+    public function triggered_sync()
     {
-        Log::info('Started scheduled meeting synchronization.');
+        Log::info('Started triggered meeting synchronization.');
         try {
             Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
-                ->notify(new GeneralNotification('Started scheduled meeting synchronization.'));
+                ->notify(new GeneralNotification('Started triggered meeting synchronization.'));
         } catch (\Exception $e) {
-            Log::warning('Failed sending notification via Telegram: Started scheduled meeting synchronization.');
+            Log::warning('Failed sending notification via Telegram: Started triggered meeting synchronization.');
         }
 
         $this->sync();
 
-        Log::info('Finished scheduled meeting synchronization.');
+        Log::info('Finished triggered meeting synchronization.');
         try {
             Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
-                ->notify(new GeneralNotification('Finished scheduled meeting synchronization.'));
+                ->notify(new GeneralNotification('Finished triggered meeting synchronization.'));
         } catch (\Exception $e) {
-            Log::warning('Failed sending notification via Telegram: Finished scheduled meeting synchronization.');
+            Log::warning('Failed sending notification via Telegram: Finished triggered meeting synchronization.');
         }
     }
 
