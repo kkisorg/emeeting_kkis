@@ -13,10 +13,10 @@ class EventNotificationController extends Controller
     public function zoom_event(Request $request)
     {
         // Construct the array of whitelisted IP.
-        $ip_addresses = explode(';', env('ZOOM_WHITELIST'));
+        $ip_addresses = explode(';', env('ZOOM_WHITELIST_IP_ADDRESSES'));
 
         // Add test IP (if provided).
-        $test_ip_address = env('ZOOM_WHITELIST_TEST');
+        $test_ip_address = env('ZOOM_WHITELIST_TEST_IP_ADDRESS');
         if ($test_ip_address !== '') {
             array_push($ip_addresses, $test_ip_address);
         }
