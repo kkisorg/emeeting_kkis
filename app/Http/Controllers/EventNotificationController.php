@@ -46,12 +46,14 @@ class EventNotificationController extends Controller
                 $message = $participant_name.' joined meeting '.$meeting_id.'.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
+                break;
             case 'meeting.participant_left':
                 $meeting_id = $request->input('payload.object.id');
                 $participant_name = $request->input('payload.object.participant.user_name');
                 $message = $participant_name.' left meeting '.$meeting_id.'.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
+                break;
             case 'meeting.created':
             case 'meeting.updated':
             case 'meeting.deleted':
