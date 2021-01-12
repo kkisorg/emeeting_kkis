@@ -28,6 +28,8 @@ class Kernel extends ConsoleKernel
         //          ->hourly();
         $schedule->call('App\Http\Controllers\MeetingController@start_livestream')->everyMinute();
         $schedule->call('App\Http\Controllers\MeetingController@test')->dailyAt('02:00');
+        // Temporary
+        $schedule->call('App\Http\Controllers\MeetingController@manual_sync')->hourlyAt(45);
     }
 
     /**
