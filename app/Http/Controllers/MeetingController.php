@@ -186,13 +186,13 @@ class MeetingController extends Controller
                           ->first();
 
         if ($meeting) {
-            Log::info('Starting livestream for meeting ID '.$meeting->meeting_id.'.');
+            Log::info('Starting livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').');
             try {
                 Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
-                    new GeneralNotification('Starting livestream for meeting ID '.$meeting->meeting_id.'.', $meeting));
+                    new GeneralNotification('Starting livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').', $meeting));
             } catch (\Exception $e) {
                 Log::warning('Failed sending notification via Telegram: '.
-                    'Starting livestream for meeting ID '.$meeting->meeting_id.'.');
+                    'Starting livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').');
             }
             $client = new Client([
                 'base_uri' => env('ZOOM_BASE_URI'),
@@ -258,17 +258,17 @@ class MeetingController extends Controller
                 }
                 return;
             }
-            Log::info('Livestream for meeting ID '.$meeting->meeting_id.
+            Log::info('Livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.')'.
                 ' started using '.$meeting->livestream_configurations->name.'.');
             try {
                 Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
                     new GeneralNotification(
-                        'Livestream for meeting ID '.$meeting->meeting_id.' started using '
+                        'Livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') started using '
                         .$meeting->livestream_configurations->name.'.', $meeting));
             } catch (\Exception $e) {
                 Log::warning(
                     'Failed sending notification via Telegram: '.
-                    'Livestream for meeting ID '.$meeting->meeting_id.
+                    'Livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.')'.
                     ' started using '.$meeting->livestream_configurations->name.'.');
             }
         }
