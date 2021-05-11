@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
+use App\LivestreamConfiguration;
 use App\Notifications\GeneralNotification;
 
 class EventNotificationController extends Controller
@@ -66,6 +67,15 @@ class EventNotificationController extends Controller
                 app(MeetingController::class)->triggered_sync();
                 break;
             case 'meeting.live_streaming_started':
+                // Ignore TEST livestream events.
+                $livestream_configuration = LivestreamConfiguration
+                    ::where('livestream_url', $request->input('payload.object.live_streaming.custom_live_streaming_settings.stream_url'))
+                    ->where('livestream_key', $request->input('payload.object.live_streaming.custom_live_streaming_settings.stream_key'))
+                    ->where('name', 'TEST')
+                    ->first();
+                if ($livestream_configuration) {
+                    break;
+                }
                 $meeting_id = $request->input('payload.object.id');
                 $meeting_topic = $request->input('payload.object.topic');
                 $message = 'Livestream for meeting '.$meeting_id.' ('.$meeting_topic.') started successfully.';
@@ -73,6 +83,15 @@ class EventNotificationController extends Controller
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.live_streaming_stopped':
+                // Ignore TEST livestream events.
+                $livestream_configuration = LivestreamConfiguration
+                    ::where('livestream_url', $request->input('payload.object.live_streaming.custom_live_streaming_settings.stream_url'))
+                    ->where('livestream_key', $request->input('payload.object.live_streaming.custom_live_streaming_settings.stream_key'))
+                    ->where('name', 'TEST')
+                    ->first();
+                if ($livestream_configuration) {
+                    break;
+                }
                 $meeting_id = $request->input('payload.object.id');
                 $meeting_topic = $request->input('payload.object.topic');
                 $message = 'Livestream for meeting '.$meeting_id.' ('.$meeting_topic.') stopped successfully.';

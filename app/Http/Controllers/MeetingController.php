@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 
+use App\LivestreamConfiguration;
 use App\Meeting;
 use App\Notifications\GeneralNotification;
 
@@ -172,6 +173,237 @@ class MeetingController extends Controller
 
             // Update next page token for pagination.
             $next_page_token = $contents_json->next_page_token;
+        }
+    }
+
+    public function test_livestream()
+    {
+        $now = Carbon::now();
+        $two_minutes_later = $now->copy()->addMinutes(2);
+        $three_minutes_later = $now->copy()->addMinutes(3);
+
+        $meeting = Meeting::where('status', 'ENABLED')
+                          ->whereNotNull('livestream_configuration_id')
+                          ->whereBetween('livestream_start_at', [$two_minutes_later, $three_minutes_later])
+                          ->first();
+
+        if ($meeting) {
+            // Edit the configuration.
+            Log::info('Configuring test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').');
+
+            $test_livestream_configuration = LivestreamConfiguration::where('name', 'TEST')->first();
+            if (!$test_livestream_configuration) {
+                Log::error('Cannot find livestream configuration for testing.');
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))->notify(
+                        new GeneralNotification('Cannot find livestream configuration for testing.'));
+                } catch (\Exception $e) {
+                    Log::warning('Cannot find livestream configuration for testing.');
+                }
+                return;
+            }
+
+            $client = new Client([
+                'base_uri' => env('ZOOM_BASE_URI'),
+                'timeout' => 5.0,
+            ]);
+            $request_headers = [
+                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Content-Type' => 'application/json'
+            ];
+            $body = [
+                'stream_url' => $test_livestream_configuration->livestream_url,
+                'stream_key' => $test_livestream_configuration->livestream_key,
+                'page_url' => null
+            ];
+            try {
+                $response = $client->request(
+                   'PATCH',
+                   'meetings/'.$meeting->meeting_id.'/livestream',
+                   [
+                       'headers' => $request_headers,
+                       'body' => json_encode($body),
+                   ]
+                );
+            } catch (ConnectException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ConnectException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ConnectException occurred when configuring test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ConnectException occurred when configuring test livestream.');
+                }
+                return;
+            } catch (ClientException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ClientException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ClientException occurred when configuring test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ClientException occurred when configuring test livestream.');
+                }
+                return;
+            } catch (ServerException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ServerException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ServerException occurred when configuring test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ServerException occurred when configuring test livestream.');
+                }
+                return;
+            }
+            Log::info('Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') configured using '.$test_livestream_configuration->name,'.');
+
+            // Start the livestream.
+            Log::info('Starting test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').');
+            $client = new Client([
+                'base_uri' => env('ZOOM_BASE_URI'),
+                'timeout' => 5.0,
+            ]);
+            $request_headers = [
+                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Content-Type' => 'application/json'
+            ];
+            $body = [
+                'action' => 'start',
+                'settings' => [
+                    'active_speaker_name' => false,
+                    'display_name' => $test_livestream_configuration->name
+                ]
+            ];
+            try {
+                $response = $client->request(
+                   'PATCH',
+                   'meetings/'.$meeting->meeting_id.'/livestream/status',
+                   [
+                       'headers' => $request_headers,
+                       'body' => json_encode($body),
+                   ]
+                );
+            } catch (ConnectException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ConnectException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ConnectException occurred when starting test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ConnectException occurred when starting test livestream.');
+                }
+                return;
+            } catch (ClientException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ClientException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ClientException occurred when starting test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ClientException occurred when starting test livestream.');
+                }
+                return;
+            } catch (ServerException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ServerException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ServerException occurred when starting test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ServerException occurred when starting test livestream.');
+                }
+                return;
+            }
+
+            // Wait for sometimes, making sure test livestream was started successfully.
+            sleep(30);
+
+            // Stop the livestream.
+            // When livestream encountered a problem, this request will return HTTP status code 400.
+            Log::info('Stopping test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').');
+            $client = new Client([
+                'base_uri' => env('ZOOM_BASE_URI'),
+                'timeout' => 5.0,
+            ]);
+            $request_headers = [
+                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Content-Type' => 'application/json'
+            ];
+            $body = [
+                'action' => 'stop',
+                'settings' => [
+                    'active_speaker_name' => false,
+                    'display_name' => $test_livestream_configuration->name
+                ]
+            ];
+            try {
+                $response = $client->request(
+                   'PATCH',
+                   'meetings/'.$meeting->meeting_id.'/livestream/status',
+                   [
+                       'headers' => $request_headers,
+                       'body' => json_encode($body),
+                   ]
+                );
+            } catch (ConnectException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ConnectException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ConnectException occurred when stopping test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ConnectException occurred when stopping test livestream.');
+                }
+                return;
+            } catch (ClientException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ClientException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') failed using '.$test_livestream_configuration->name.'.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') failed using '.$test_livestream_configuration->name.'.');
+                }
+                return;
+            } catch (ServerException $e) {
+                $error_message = "Request:\n".Psr7\str($e->getRequest());
+                if ($e->hasResponse()) {
+                    $error_message .= "Response:\n".Psr7\str($e->getResponse());
+                }
+                Log::error("ServerException:\n".$error_message);
+                try {
+                    Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
+                        ->notify(new GeneralNotification('ServerException occurred when stopping test livestream.', $meeting));
+                } catch (\Exception $e) {
+                    Log::warning('Failed sending notification via Telegram: ServerException occurred when stopping test livestream.');
+                }
+                return;
+            }
         }
     }
 
