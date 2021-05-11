@@ -385,9 +385,9 @@ class MeetingController extends Controller
                 Log::error("ClientException:\n".$error_message);
                 try {
                     Notification::route('telegram', env('TELEGRAM_ADMIN_USER_ID'))
-                        ->notify(new GeneralNotification('Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') failed using '.$test_livestream_configuration->name.'.', $meeting));
+                        ->notify(new GeneralNotification('ClientException occurred when stopping test livestream.', $meeting));
                 } catch (\Exception $e) {
-                    Log::warning('Failed sending notification via Telegram: Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') failed using '.$test_livestream_configuration->name.'.');
+                    Log::warning('Failed sending notification via Telegram: ClientException occurred when stopping test livestream.');
                 }
                 return;
             } catch (ServerException $e) {
