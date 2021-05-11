@@ -31,26 +31,28 @@ class EventNotificationController extends Controller
         $event = $request->input('event');
         switch ($event) {
             case 'meeting.started':
-                $message = 'Meeting '.$request->input('payload.object.id').' started.';
+                $message = 'Meeting '.$request->input('payload.object.id').' ('.$request->input('payload.object.topic').') started.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.ended':
-                $message = 'Meeting '.$request->input('payload.object.id').' ended.';
+                $message = 'Meeting '.$request->input('payload.object.id').' ('.$request->input('payload.object.topic').') ended.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.participant_joined':
                 $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
                 $participant_name = $request->input('payload.object.participant.user_name');
-                $message = $participant_name.' joined meeting '.$meeting_id.'.';
+                $message = $participant_name.' joined meeting '.$meeting_id.' ('.$meeting_topic.').';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.participant_left':
                 $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
                 $participant_name = $request->input('payload.object.participant.user_name');
-                $message = $participant_name.' left meeting '.$meeting_id.'.';
+                $message = $participant_name.' left meeting '.$meeting_id.' ('.$meeting_topic.').';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
