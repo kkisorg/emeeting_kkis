@@ -31,12 +31,16 @@ class EventNotificationController extends Controller
         $event = $request->input('event');
         switch ($event) {
             case 'meeting.started':
-                $message = 'Meeting '.$request->input('payload.object.id').' ('.$request->input('payload.object.topic').') started.';
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Meeting '.$meeting_id.' ('.$meeting_topic.') started.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.ended':
-                $message = 'Meeting '.$request->input('payload.object.id').' ('.$request->input('payload.object.topic').') ended.';
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Meeting '.$meeting_id.' ('.$meeting_topic.') ended.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
