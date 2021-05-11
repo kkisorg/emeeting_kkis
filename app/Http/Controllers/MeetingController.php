@@ -265,7 +265,7 @@ class MeetingController extends Controller
                 }
                 return;
             }
-            Log::info('Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') configured using '.$test_livestream_configuration->name,'.');
+            Log::info('Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') configured using '.$test_livestream_configuration->name.'.');
 
             // Start the livestream.
             Log::info('Starting test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.').');
