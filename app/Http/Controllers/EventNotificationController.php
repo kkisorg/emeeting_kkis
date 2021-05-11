@@ -61,6 +61,20 @@ class EventNotificationController extends Controller
             case 'meeting.deleted':
                 app(MeetingController::class)->triggered_sync();
                 break;
+            case 'meeting.live_streaming_started':
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Livestream for meeting '.$meeting_id.' ('.$meeting_topic.') started successfully.';
+                Log::info($message);
+                $this->send_telegram_notification($message);
+                break;
+            case 'meeting.live_streaming_stopped':
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Livestream for meeting '.$meeting_id.' ('.$meeting_topic.') stopped successfully.';
+                Log::info($message);
+                $this->send_telegram_notification($message);
+                break;
             default:
                 break;
         }
