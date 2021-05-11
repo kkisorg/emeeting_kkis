@@ -404,6 +404,8 @@ class MeetingController extends Controller
                 }
                 return;
             }
+
+            Log::info('Test livestream for meeting ID '.$meeting->meeting_id.' ('.$meeting->topic.') executed successfully.');
         }
     }
 
