@@ -80,6 +80,9 @@ class EventNotificationController extends Controller
                 $this->send_telegram_notification($message);
                 break;
             default:
+                $event = $request->input('event');
+                Log::info($event);
+                $this->send_telegram_notification($event);
                 break;
         }
         return response(null, 204);
