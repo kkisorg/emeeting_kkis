@@ -31,26 +31,32 @@ class EventNotificationController extends Controller
         $event = $request->input('event');
         switch ($event) {
             case 'meeting.started':
-                $message = 'Meeting '.$request->input('payload.object.id').' started.';
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Meeting '.$meeting_id.' ('.$meeting_topic.') started.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.ended':
-                $message = 'Meeting '.$request->input('payload.object.id').' ended.';
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Meeting '.$meeting_id.' ('.$meeting_topic.') ended.';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.participant_joined':
                 $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
                 $participant_name = $request->input('payload.object.participant.user_name');
-                $message = $participant_name.' joined meeting '.$meeting_id.'.';
+                $message = $participant_name.' joined meeting '.$meeting_id.' ('.$meeting_topic.').';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
             case 'meeting.participant_left':
                 $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
                 $participant_name = $request->input('payload.object.participant.user_name');
-                $message = $participant_name.' left meeting '.$meeting_id.'.';
+                $message = $participant_name.' left meeting '.$meeting_id.' ('.$meeting_topic.').';
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
@@ -58,6 +64,20 @@ class EventNotificationController extends Controller
             case 'meeting.updated':
             case 'meeting.deleted':
                 app(MeetingController::class)->triggered_sync();
+                break;
+            case 'meeting.live_streaming_started':
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Livestream for meeting '.$meeting_id.' ('.$meeting_topic.') started successfully.';
+                Log::info($message);
+                $this->send_telegram_notification($message);
+                break;
+            case 'meeting.live_streaming_stopped':
+                $meeting_id = $request->input('payload.object.id');
+                $meeting_topic = $request->input('payload.object.topic');
+                $message = 'Livestream for meeting '.$meeting_id.' ('.$meeting_topic.') stopped successfully.';
+                Log::info($message);
+                $this->send_telegram_notification($message);
                 break;
             default:
                 break;
