@@ -214,7 +214,7 @@ class MeetingController extends Controller
             $body = [
                 'stream_url' => $test_livestream_configuration->livestream_url,
                 'stream_key' => $test_livestream_configuration->livestream_key,
-                'page_url' => null
+                'page_url' => env('LIVESTREAM_DEFAULT_PAGE_URL')
             ];
             try {
                 $response = $client->request(
