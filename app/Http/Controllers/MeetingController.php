@@ -45,7 +45,7 @@ class MeetingController extends Controller
         $client_secret = env('ZOOM_CLIENT_SECRET');
         $request_headers = [
             'Host' => 'zoom.us',
-            'Authorization' => 'Basic '.base64_encode($client_id.'.'.$client_secret)
+            'Authorization' => 'Basic '.base64_encode($client_id.':'.$client_secret)
         ];
         $request_query = [
             'grant_type' => 'account_credentials',
