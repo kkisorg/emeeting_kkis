@@ -30,6 +30,44 @@ class MeetingController extends Controller
     }
 
     /**
+     * Get authentication token (Server-to-Server OAuth)
+     *
+     * @return string
+     */
+    private function get_token() {
+        $client = new Client([
+            'base_uri' => env('ZOOM_AUTH_BASE_URI'),
+            'timeout' => 5.0,
+        ]);
+
+        $account_id = env('ZOOM_ACCOUNT_ID');
+        $client_id = env('ZOOM_CLIENT_ID');
+        $client_secret = env('ZOOM_CLIENT_SECRET');
+        $request_headers = [
+            'Host' => 'zoom.us',
+            'Authorization' => 'Basic '.base64_encode($client_id.'.'.$client_secret)
+        ];
+        $request_query = [
+            'grant_type' => 'account_credentials',
+            'account_id' => $account_id
+        ];
+
+        $response = $client->request(
+            'POST',
+            'oauth/token',
+            [
+                'headers' => $request_headers,
+                'query' => $request_query,
+            ]
+        );
+
+        $body = $response->getBody();
+        $contents = $body->getContents();
+        $contents_json = json_decode($contents);
+        return $contents_json->access_token;
+    }
+
+    /**
      * Show the application dashboard.
      *
      * @return \Illuminate\Contracts\Support\Renderable
@@ -96,7 +134,7 @@ class MeetingController extends Controller
         $next_page_token = null;
         while(($next_page_token === null) || ($next_page_token !== '')) {
             // Prepare and perform request.
-            $request_headers = ['Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN')];
+            $request_headers = ['Authorization' => 'Bearer '.$this->get_token()];
             $request_query = ['type' => 'upcoming', 'page_size' => 10];
             if ($next_page_token !== null) {
                 $request_query['next_page_token'] = $next_page_token;
@@ -208,7 +246,7 @@ class MeetingController extends Controller
                 'timeout' => 5.0,
             ]);
             $request_headers = [
-                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Authorization' => 'Bearer '.$this->get_token(),
                 'Content-Type' => 'application/json'
             ];
             $body = [
@@ -274,7 +312,7 @@ class MeetingController extends Controller
                 'timeout' => 5.0,
             ]);
             $request_headers = [
-                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Authorization' => 'Bearer '.$this->get_token(),
                 'Content-Type' => 'application/json'
             ];
             $body = [
@@ -345,7 +383,7 @@ class MeetingController extends Controller
                 'timeout' => 5.0,
             ]);
             $request_headers = [
-                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Authorization' => 'Bearer '.$this->get_token(),
                 'Content-Type' => 'application/json'
             ];
             $body = [
@@ -434,7 +472,7 @@ class MeetingController extends Controller
                 'timeout' => 5.0,
             ]);
             $request_headers = [
-                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Authorization' => 'Bearer '.$this->get_token(),
                 'Content-Type' => 'application/json'
             ];
             $body = [
@@ -519,7 +557,7 @@ class MeetingController extends Controller
                 'timeout' => 5.0,
             ]);
             $request_headers = [
-                'Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN'),
+                'Authorization' => 'Bearer '.$this->get_token(),
                 'Content-Type' => 'application/json'
             ];
             $body = [
@@ -612,7 +650,7 @@ class MeetingController extends Controller
             'base_uri' => env('ZOOM_BASE_URI'),
             'timeout' => 5.0,
         ]);
-        $request_headers = ['Authorization' => 'Bearer '.env('ZOOM_JWT_TOKEN')];
+        $request_headers = ['Authorization' => 'Bearer '.$this->get_token()];
         $request_query = ['email' => env('ZOOM_USER_ID')];
         try {
             $response = $client->request(
