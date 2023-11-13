@@ -102,6 +102,12 @@ class EventNotificationController extends Controller
                 Log::info($message);
                 $this->send_telegram_notification($message);
                 break;
+            case 'endpoint.url_validation':
+                // Only to validate the webhook endpoint and activate the app.
+                $webhook_secret_token = env('ZOOM_WEBHOOK_SECRET');
+                $plain_token = $request->input('payload.plainToken');
+                $encrypted_token = hash_hmac('sha256', $plain_token, $webhook_secret_token);
+                return response()->json(['plainToken' => $plain_token, 'encryptedToken' => $encrypted_token], 200);
             default:
                 break;
         }
